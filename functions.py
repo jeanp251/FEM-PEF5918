@@ -1,8 +1,10 @@
 import numpy as np
 import math
+import matplotlib.pyplot as plt
+
 def assign_BCs(NL,ENL):
     PD = np.size(NL,1) # Problem Dimension
-    NoN = np.size(NL,0) # Number of Nodes
+    NoN = np.size(NL,0) # eNumber of Nodes
 
     DOFs = 0
     DOCs = 0
@@ -121,3 +123,198 @@ def update_nodes(ENL, U_u, NL, Fu):
                 ENL[i, 5*PD+j] = Fu[DOCs-1]
 
     return ENL
+
+def plot_pre_process_v0(node_list, node_restraints, Fu, element_list):
+    # node_list: np array list of the nodes 
+    # node_restraints: np array list of the node constraints [x,y,rz]
+    # -1: Fixed
+    # +1: Free
+    # Fu: Nodal Forces [Fx, Fy, Mz]
+    # element_list: np array list of elements of the structure
+
+    number_nodes = node_list.shape[0]
+    DoP = node_restraints.shape[1]
+    number_elements = element_list.shape[0]
+
+    fig, ax = plt.subplots(figsize=(10,10))
+    for i in range(number_nodes):
+        x_node = node_list[i,0]
+        y_node = node_list[i,1]
+        ax.scatter(x_node, y_node, s=50, facecolor='k', edgecolor='k', linewidths = 3, zorder=1)
+        ax.annotate(str(i+1), xy=(x_node, y_node), xytext=(x_node + 0.05, y_node + 0.05))
+
+        # PLOT NODAL FORCES
+        for j in range(DoP):
+            nodal_force = Fu[i,j]
+            if nodal_force != 0:
+                match j:
+                    case 0: # Fx
+                        if nodal_force > 0:
+                            ax.annotate(str(nodal_force)+'N',
+                                        xy=(x_node, y_node),
+                                        xytext=(x_node - 0.5, y_node + 0.05),
+                                        color = 'red')
+                            ax.arrow(x_node - 0.5, y_node, 0.45 , 0,
+                                    width = 0.04,
+                                    color = 'red',
+                                    length_includes_head = True)
+                        else:
+                            ax.annotate(str(abs(nodal_force)) + 'N',
+                                        xy=(x_node, y_node),
+                                        xytext=(x_node + 0.5, y_node + 0.05),
+                                        color = 'red')
+                            ax.arrow(x_node + 0.5, y_node, -0.45 , 0, 
+                                    width = 0.04,
+                                    color = 'red',
+                                    length_includes_head = True)
+                    case 1: # Fy
+                        if nodal_force > 0:
+                            ax.annotate(str(nodal_force) + 'N',
+                                        xy=(x_node, y_node),
+                                        xytext=(x_node + 0.05, y_node + 0.5),
+                                        color = 'red')
+                            ax.arrow(x_node, y_node + 0.05, 0, 0.45,
+                                    width = 0.04,
+                                    color = 'red',
+                                    length_includes_head = True)
+                        else:
+                            ax.annotate(str(abs(nodal_force)) + 'N',
+                                        xy=(x_node, y_node),
+                                        xytext=(x_node + 0.05, y_node + 0.5),
+                                        color = 'red')
+                            ax.arrow(x_node, y_node + 0.45, 0, -0.45,
+                                    width = 0.04,
+                                    color = 'red',
+                                    length_includes_head = True)
+                    case 2: # Mz
+                        ax.annotate('Mz='+str(nodal_force)+'N.m',
+                                    xy=(x_node, y_node),
+                                    xytext=(x_node - 0.5, y_node + 0.5),
+                                    color = 'red')
+    # PLOT ELEMENTS       
+    for i in range(number_elements):
+        coord_ini = element_list[i,0]
+        coord_end = element_list[i,1]
+        # Initial Coordinates
+        xi = node_list[coord_ini-1, 0]
+        yi = node_list[coord_ini-1, 1]
+        # End Coordinates
+        xj = node_list[coord_end-1, 0]
+        yj = node_list[coord_end-1, 1]
+        # Centroid Coordinates
+        xg = (xi+xj)/2
+        yg = (yi+yj)/2
+
+        x_element = np.array([xi,xj])
+        y_element = np.array([yi,yj])
+
+        ax.plot(x_element, y_element, lw=5, zorder=0)
+        ax.text(xg, yg, str(i+1), color='blue', bbox=dict(facecolor='white', edgecolor='blue'))
+
+    ax.set_xlabel('x [m]')
+    ax.set_ylabel('y [m]')
+    plt.show()
+
+def plot_pre_process_v1(node_list, node_restraints, Fu, element_list):
+    # node_list: np array list of the nodes 
+    # node_restraints: np array list of the node constraints [x,y,rz]
+    # -1: Fixed
+    # +1: Free
+    # Fu: Nodal Forces [Fx, Fy, Mz]
+    # element_list: np array list of elements of the structure
+    #
+    number_nodes = node_list.shape[0]
+    DoP = node_restraints.shape[1]
+    number_elements = element_list.shape[0]
+    #
+    # PLOT
+    # First we need to get a reference dimension to plot all the stuff in proportion to this
+    x_min = np.min(node_list[:,0])
+    y_min = np.min(node_list[:,1])
+    x_max = np.max(node_list[:,0])
+    y_max = np.max(node_list[:,1])
+
+    prop_dimension = math.sqrt((x_min-x_max)**2+(y_min-y_max)**2)
+
+    arrow_width = 5.657e-3*prop_dimension # Width of the Force Arrows
+
+    fig, ax = plt.subplots(figsize=(10,10))
+    for i in range(number_nodes):
+        x_node = node_list[i,0]
+        y_node = node_list[i,1]
+        ax.scatter(x_node, y_node, s=50, facecolor='k', edgecolor='k', linewidths = 3, zorder=1)
+        ax.annotate(str(i+1),
+                    xy=(x_node, y_node),
+                    xytext=(x_node + 7e-3*prop_dimension, y_node + 7e-3*prop_dimension))
+
+        # PLOT NODAL FORCES
+        for j in range(DoP):
+            nodal_force = Fu[i,j]
+            if nodal_force != 0:
+                match j:
+                    case 0: # Fx
+                        if nodal_force > 0: # Positive Fx
+                            ax.annotate(str(nodal_force)+'N',
+                                        xy=(x_node, y_node),
+                                        xytext=(x_node - 7.1e-2*prop_dimension, y_node + 7e-3*prop_dimension),
+                                        color = 'red')
+                            ax.arrow(x_node - 7.1e-2*prop_dimension, y_node, 6.36e-2*prop_dimension , 0,
+                                    width = arrow_width,
+                                    color = 'red',
+                                    length_includes_head = True)
+                        else: # Negative Fx
+                            ax.annotate(str(abs(nodal_force)) + 'N',
+                                        xy=(x_node, y_node),
+                                        xytext=(x_node + 7.1e-2*prop_dimension, y_node + 7e-3*prop_dimension),
+                                        color = 'red')
+                            ax.arrow(x_node + 7.1e-2*prop_dimension, y_node, -6.36e-2*prop_dimension , 0, 
+                                    width = arrow_width,
+                                    color = 'red',
+                                    length_includes_head = True)
+                    case 1: # Fy
+                        if nodal_force > 0: # Positive Fy
+                            ax.annotate(str(nodal_force) + 'N',
+                                        xy=(x_node, y_node),
+                                        xytext=(x_node + 7e-3*prop_dimension, y_node + 7.1e-2*prop_dimension),
+                                        color = 'red')
+                            ax.arrow(x_node, y_node + 7e-3*prop_dimension, 0, 6.36e-2*prop_dimension,
+                                    width = arrow_width,
+                                    color = 'red',
+                                    length_includes_head = True)
+                        else: # Negative Fy
+                            ax.annotate(str(abs(nodal_force)) + 'N',
+                                        xy=(x_node, y_node),
+                                        xytext=(x_node + 7e-3*prop_dimension, y_node + 7.1e-2*prop_dimension),
+                                        color = 'red')
+                            ax.arrow(x_node, y_node + 6.36e-2*prop_dimension, 0, -6.36e-2*prop_dimension,
+                                    width = arrow_width,
+                                    color = 'red',
+                                    length_includes_head = True)
+                    case 2: # Mz
+                        ax.annotate('Mz='+str(nodal_force)+'N.m',
+                                    xy=(x_node, y_node),
+                                    xytext=(x_node - 8.5e-2*prop_dimension, y_node + 5e-2*prop_dimension),
+                                    color = 'red')
+    # PLOT ELEMENTS       
+    for i in range(number_elements):
+        coord_ini = element_list[i,0]
+        coord_end = element_list[i,1]
+        # Initial Coordinates
+        xi = node_list[coord_ini-1, 0]
+        yi = node_list[coord_ini-1, 1]
+        # End Coordinates
+        xj = node_list[coord_end-1, 0]
+        yj = node_list[coord_end-1, 1]
+        # Centroid Coordinates
+        xg = (xi+xj)/2
+        yg = (yi+yj)/2
+
+        x_element = np.array([xi,xj])
+        y_element = np.array([yi,yj])
+
+        ax.plot(x_element, y_element, lw=5, zorder=0)
+        ax.text(xg, yg, str(i+1), color='blue', bbox=dict(facecolor='white', edgecolor='blue'))
+
+    ax.set_xlabel('x [m]')
+    ax.set_ylabel('y [m]')
+    plt.show()
