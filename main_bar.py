@@ -1,7 +1,9 @@
 import numpy as np
 import math
-from functions import *
 from input_frame import *
+from frame_pre_process import *
+from functions import *
+from frame_pos_process import *
 import matplotlib.pyplot as plt
 # ----------------------------------------------------------------------------
 # INPUT DATA
@@ -17,7 +19,7 @@ DoP = node_restraints.shape[1]
 ENL = np.zeros([number_nodes, 2 + 5*DoP])
 
 # PLOT STRUCTURE
-plot_frame_pre_process_v0(node_list, node_restraints, Fu, element_list)
+plot_frame_pre_process_v1(node_list, node_restraints, Fu, element_list)
 
 # Assign Nodes Coordinates and restraints
 ENL[:,0:2] = node_list[:,:]
@@ -54,11 +56,20 @@ ENL = update_frame_nodes(ENL, U_u, node_list, Fu, node_restraints)
 print('Final ENL')
 np.set_printoptions(suppress=True, precision=4)
 print(ENL)
-post_process_frame  (ENL,DoP, scale_factor=500)
+# POS-PROCESS
+plot_deformation_frame(ENL,DoP, scale_factor=1)
 
 node_displacements = ENL[:,int(2+3*DoP):int(2+4*DoP)]
 print('node displacements')
 print(node_displacements)
-internal_forces = ENL[:, 2+4*DoP:2+5*DoP]
-print('internal forces')
-print(internal_forces)
+node_reactions = ENL[:, 2+4*DoP:2+5*DoP]
+print('node reactions')
+print(node_reactions)
+
+(element_internal_forces, element_angles) = get_frame_internal_forces(ENL, element_list, element_properties, DoP)
+
+print(element_internal_forces)
+print(element_angles)
+
+plot_frame_moment_diagram(ENL, element_list, element_internal_forces, element_angles, scale_factor=1)
+plot_frame_shear_diagram(ENL, element_list, element_internal_forces, element_angles, scale_factor=1)

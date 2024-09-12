@@ -132,238 +132,6 @@ def update_nodes(ENL, U_u, NL, Fu):
 # BAR FUNCTIONS
 # ----------------------------------------------------------------------------
 # ----------------------------------------------------------------------------
-def plot_frame_pre_process_v0(node_list, node_restraints, Fu, element_list):
-    # node_list: np array list of the nodes 
-    # node_restraints: np array list of the node constraints [x,y,rz]
-    # -1: Fixed
-    # +1: Free
-    # Fu: Nodal Forces [Fx, Fy, Mz]
-    # element_list: np array list of elements of the structure
-
-    number_nodes = node_list.shape[0]
-    DoP = node_restraints.shape[1]
-    number_elements = element_list.shape[0]
-
-    fig, ax = plt.subplots(figsize=(10,10))
-    # PLOT NODES
-    for i in range(number_nodes):
-        x_node = node_list[i,0]
-        y_node = node_list[i,1]
-        # PLOT NODES INFO
-        ax.scatter(x_node, y_node, s=50, facecolor='k', edgecolor='k', linewidths = 3, zorder=1)
-        ax.annotate(str(i+1), xy=(x_node, y_node), xytext=(x_node + 0.05, y_node + 0.05))
-
-        for j in range(DoP):
-            nodal_force = Fu[i,j]
-            node_restraint = node_restraints[i,:]
-            # PLOT NODAL FORCES
-            if nodal_force != 0:
-                match j:
-                    case 0: # Fx
-                        if nodal_force > 0:
-                            ax.annotate(str(nodal_force)+'N',
-                                        xy=(x_node, y_node),
-                                        xytext=(x_node - 0.5, y_node + 0.05),
-                                        color = 'red')
-                            ax.arrow(x_node - 0.5, y_node, 0.45 , 0,
-                                    width = 0.04,
-                                    color = 'red',
-                                    length_includes_head = True)
-                        else:
-                            ax.annotate(str(abs(nodal_force)) + 'N',
-                                        xy=(x_node, y_node),
-                                        xytext=(x_node + 0.5, y_node + 0.05),
-                                        color = 'red')
-                            ax.arrow(x_node + 0.5, y_node, -0.45 , 0, 
-                                    width = 0.04,
-                                    color = 'red',
-                                    length_includes_head = True)
-                    case 1: # Fy
-                        if nodal_force > 0:
-                            ax.annotate(str(nodal_force) + 'N',
-                                        xy=(x_node, y_node),
-                                        xytext=(x_node + 0.05, y_node + 0.5),
-                                        color = 'red')
-                            ax.arrow(x_node, y_node + 0.05, 0, 0.45,
-                                    width = 0.04,
-                                    color = 'red',
-                                    length_includes_head = True)
-                        else:
-                            ax.annotate(str(abs(nodal_force)) + 'N',
-                                        xy=(x_node, y_node),
-                                        xytext=(x_node + 0.05, y_node + 0.5),
-                                        color = 'red')
-                            ax.arrow(x_node, y_node + 0.45, 0, -0.45,
-                                    width = 0.04,
-                                    color = 'red',
-                                    length_includes_head = True)
-                    case 2: # Mz
-                        ax.annotate('Mz='+str(nodal_force)+'N.m',
-                                    xy=(x_node, y_node),
-                                    xytext=(x_node - 0.5, y_node + 0.5),
-                                    color = 'red')
-            # PLOT NODE RESTRAINTS
-        if np.any(node_restraint<0):
-            delta_x = 0.25
-            delta_y = 0.25
-            delta_x_text = 0.25
-            delta_y_text = 0.45
-            restraint_x = np.array([x_node, x_node+delta_x, x_node-delta_x, x_node])
-            restraint_y = np.array([y_node, y_node-delta_y, y_node-delta_y, y_node])
-            ax.plot(restraint_x, restraint_y, lw = 2)
-            
-            if node_restraint[0]<0:
-                ux = 'Ux'
-            else:
-                ux = ''
-
-            if node_restraint[1]<0:
-                uy = 'Uy'
-            else:
-                uy = ''
-
-            if node_restraint[2]<0:
-                uz = 'Rz'
-            else:
-                uz = ''
-            restraint_info = ux+uy+uz
-
-            ax.text(x_node-delta_x_text,
-                    y_node-delta_y_text,
-                    restraint_info,
-                    color='red',
-                    bbox=dict(facecolor='white', edgecolor='red'))
-
-    # PLOT ELEMENTS       
-    for i in range(number_elements):
-        coord_ini = element_list[i,0]
-        coord_end = element_list[i,1]
-        # Initial Coordinates
-        xi = node_list[coord_ini-1, 0]
-        yi = node_list[coord_ini-1, 1]
-        # End Coordinates
-        xj = node_list[coord_end-1, 0]
-        yj = node_list[coord_end-1, 1]
-        # Centroid Coordinates
-        xg = (xi+xj)/2
-        yg = (yi+yj)/2
-
-        x_element = np.array([xi,xj])
-        y_element = np.array([yi,yj])
-
-        ax.plot(x_element, y_element, lw=5, zorder=0)
-        ax.text(xg, yg, str(i+1), color='blue', bbox=dict(facecolor='white', edgecolor='blue'))
-
-    ax.set_xlabel('x [m]')
-    ax.set_ylabel('y [m]')
-    plt.show()
-
-def plot_frame_pre_process_v1(node_list, node_restraints, Fu, element_list):
-    # node_list: np array list of the nodes 
-    # node_restraints: np array list of the node constraints [x,y,rz]
-    # -1: Fixed
-    # +1: Free
-    # Fu: Nodal Forces [Fx, Fy, Mz]
-    # element_list: np array list of elements of the structure
-    #
-    number_nodes = node_list.shape[0]
-    DoP = node_restraints.shape[1]
-    number_elements = element_list.shape[0]
-    #
-    # PLOT
-    # First we need to get a reference dimension to plot all the stuff in proportion to this
-    x_min = np.min(node_list[:,0])
-    y_min = np.min(node_list[:,1])
-    x_max = np.max(node_list[:,0])
-    y_max = np.max(node_list[:,1])
-
-    prop_dimension = math.sqrt((x_min-x_max)**2+(y_min-y_max)**2)
-
-    arrow_width = 5.657e-3*prop_dimension # Width of the Force Arrows
-
-    fig, ax = plt.subplots(figsize=(10,10))
-    # PLOT NODES
-    for i in range(number_nodes):
-        x_node = node_list[i,0]
-        y_node = node_list[i,1]
-        # PLOT NODE INFO
-        ax.scatter(x_node, y_node, s=50, facecolor='k', edgecolor='k', linewidths = 3, zorder=1)
-        ax.annotate(str(i+1),
-                    xy=(x_node, y_node),
-                    xytext=(x_node + 7e-3*prop_dimension, y_node + 7e-3*prop_dimension))
-
-        # PLOT NODAL FORCES
-        for j in range(DoP):
-            nodal_force = Fu[i,j]
-            if nodal_force != 0:
-                match j:
-                    case 0: # Fx
-                        if nodal_force > 0: # Positive Fx
-                            ax.annotate(str(nodal_force)+'N',
-                                        xy=(x_node, y_node),
-                                        xytext=(x_node - 7.1e-2*prop_dimension, y_node + 7e-3*prop_dimension),
-                                        color = 'red')
-                            ax.arrow(x_node - 7.1e-2*prop_dimension, y_node, 6.36e-2*prop_dimension , 0,
-                                    width = arrow_width,
-                                    color = 'red',
-                                    length_includes_head = True)
-                        else: # Negative Fx
-                            ax.annotate(str(abs(nodal_force)) + 'N',
-                                        xy=(x_node, y_node),
-                                        xytext=(x_node + 7.1e-2*prop_dimension, y_node + 7e-3*prop_dimension),
-                                        color = 'red')
-                            ax.arrow(x_node + 7.1e-2*prop_dimension, y_node, -6.36e-2*prop_dimension , 0, 
-                                    width = arrow_width,
-                                    color = 'red',
-                                    length_includes_head = True)
-                    case 1: # Fy
-                        if nodal_force > 0: # Positive Fy
-                            ax.annotate(str(nodal_force) + 'N',
-                                        xy=(x_node, y_node),
-                                        xytext=(x_node + 7e-3*prop_dimension, y_node + 7.1e-2*prop_dimension),
-                                        color = 'red')
-                            ax.arrow(x_node, y_node + 7e-3*prop_dimension, 0, 6.36e-2*prop_dimension,
-                                    width = arrow_width,
-                                    color = 'red',
-                                    length_includes_head = True)
-                        else: # Negative Fy
-                            ax.annotate(str(abs(nodal_force)) + 'N',
-                                        xy=(x_node, y_node),
-                                        xytext=(x_node + 7e-3*prop_dimension, y_node + 7.1e-2*prop_dimension),
-                                        color = 'red')
-                            ax.arrow(x_node, y_node + 6.36e-2*prop_dimension, 0, -6.36e-2*prop_dimension,
-                                    width = arrow_width,
-                                    color = 'red',
-                                    length_includes_head = True)
-                    case 2: # Mz
-                        ax.annotate('Mz='+str(nodal_force)+'N.m',
-                                    xy=(x_node, y_node),
-                                    xytext=(x_node - 8.5e-2*prop_dimension, y_node + 5e-2*prop_dimension),
-                                    color = 'red')
-    # PLOT ELEMENTS       
-    for i in range(number_elements):
-        coord_ini = element_list[i,0]
-        coord_end = element_list[i,1]
-        # Initial Coordinates
-        xi = node_list[coord_ini-1, 0]
-        yi = node_list[coord_ini-1, 1]
-        # End Coordinates
-        xj = node_list[coord_end-1, 0]
-        yj = node_list[coord_end-1, 1]
-        # Centroid Coordinates
-        xg = (xi+xj)/2
-        yg = (yi+yj)/2
-
-        x_element = np.array([xi,xj])
-        y_element = np.array([yi,yj])
-
-        ax.plot(x_element, y_element, lw=5, zorder=0)
-        ax.text(xg, yg, str(i+1), color='blue', bbox=dict(facecolor='white', edgecolor='blue'))
-
-    ax.set_xlabel('x [m]')
-    ax.set_ylabel('y [m]')
-    plt.show()
-
 def assign_frame_boundary_conditions(ENL, DoP):
     number_nodes = ENL.shape[0]
     DoF = 0 # Number Free Degree of Freedom
@@ -528,82 +296,88 @@ def update_frame_nodes(ENL, U_u, node_list, Fu, node_restraints):
 
     return ENL
 
-def post_process_frame(ENL, DoP, scale_factor):
-    # Gettting the structure info from the ENL
-    node_list = ENL[:,0:2]
-    number_nodes = node_list.shape[0]
-    node_displacements = ENL[:,int(2+3*DoP):int(2+4*DoP)]
-    node_restraints = ENL[:, 2:int(2+DoP)]
-    node_forces = ENL[:, 2+4*DoP:2+5*DoP]
-    # Nodes coordinates
-    x_ini = node_list[:,0]
-    y_ini = node_list[:,1]
-    x_end = x_ini + node_displacements[:,0]*scale_factor
-    y_end = y_ini + node_displacements[:,1]*scale_factor
+def get_frame_internal_forces(ENL, element_list, element_properties, DoP):
+    number_elements = element_list.shape[0]
+    print('-'*75)
+    print('Ni, Vi, Mi, Nj, Vj, Mj')
+    print('-'*75)
+    # Pre-defining the element internal forces array
+    element_internal_forces = np.zeros([number_elements, 2*DoP])
+    # Pre-defining an element angle array
+    element_angles = np.zeros(number_elements)
+    for i in range(number_elements):
+        element_property = element_properties[i, :]
+        E = element_property[2] # Youngs Modulus [Pa]
+        b = element_property[0] # Width [m]
+        h = element_property[1] # Heigth [m]
 
-    fig, ax = plt.subplots(figsize=(10,10))
-    # Plotting Node Displacements
-    ax.scatter(x_ini, y_ini, s=50, facecolor='k', edgecolor='k', linewidths = 1, zorder=1)
-    ax.scatter(x_end, y_end, s=50, facecolor='k', edgecolor='k', linewidths = 1, zorder=1)
-    # Plotting undeformed structure
-    ax.plot(x_ini, y_ini, dashes = [4,4], color = 'green')
-    ax.plot(x_end, y_end, color = 'red')
+        A = b*h # Cross Section Area [m^2]
+        I = (b*h**3)/12 # Inertia [m^4]
 
-    # Plotting Node Reactions
-    for i in range(0,number_nodes):
-        boundary_node_conditions = node_restraints[i,:]
-        # Evaluating if any of the Node has restraints
-        if np.any(boundary_node_conditions<0):
-            x_node = node_list[i,0]
-            y_node = node_list[i,1]
-            reactions = np.round(node_forces[i,:], decimals=2)
-            for j in range(0,DoP):
-                reaction = reactions[j]
-                match j:
-                    case 0: # Fx
-                        if reaction > 0:
-                            ax.annotate(str(reaction)+'N',
-                                        xy=(x_node, y_node),
-                                        xytext=(x_node - 0.5, y_node + 0.05),
-                                        color = 'red')
-                            ax.arrow(x_node - 0.5, y_node, 0.45 , 0,
-                                    width = 0.04,
-                                    color = 'red',
-                                    length_includes_head = True)
-                        else:
-                            ax.annotate(str(abs(reaction))+'N',
-                                        xy=(x_node, y_node),
-                                        xytext=(x_node - 0.5, y_node + 0.05),
-                                        color = 'red')
-                            ax.arrow(x_node - 0.05, y_node, -0.45 , 0,
-                                    width = 0.04,
-                                    color = 'red',
-                                    length_includes_head = True)
-                    case 1: # Fy
-                        if reaction > 0:
-                            ax.annotate(str(reaction) + 'N',
-                                        xy=(x_node, y_node),
-                                        xytext=(x_node + 0.05, y_node - 0.5),
-                                        color = 'red')
-                            ax.arrow(x_node, y_node - 0.5, 0, 0.45,
-                                    width = 0.04,
-                                    color = 'red',
-                                    length_includes_head = True)
-                        else:
-                            ax.annotate(str(abs(reaction)) + 'N',
-                                        xy=(x_node, y_node),
-                                        xytext=(x_node + 0.05, y_node - 0.5),
-                                        color = 'red')
-                            ax.arrow(x_node, y_node - 0.05, 0, -0.45,
-                                    width = 0.04,
-                                    color = 'red',
-                                    length_includes_head = True)
+        element_nodes = element_list[i,:]
+        node_ini = element_nodes[0]
+        node_end = element_nodes[1]
 
-                    case 2: # Mz
-                        ax.annotate('Mz='+str(reaction)+'N.m',
-                                    xy=(x_node, y_node),
-                                    xytext=(x_node - 0.5, y_node + 0.25),
-                                    color = 'red')
-    ax.set_xlabel('x [m]')
-    ax.set_ylabel('y [m]')
-    plt.show()
+        # Node Coordinates
+        xi = ENL[node_ini - 1, 0] 
+        yi = ENL[node_ini - 1, 1]
+        xj = ENL[node_end - 1, 0]
+        yj = ENL[node_end - 1, 1]
+
+        dx = xj - xi
+        dy = yj - yi
+
+        # Rotation Matrix [Q]
+        if dx==0:
+            if dy>0:
+                beta = math.pi/2
+            else:
+                beta = -math.pi/2
+        else:
+            beta = math.atan(dy/dx)
+
+        # Storing the element angle
+        element_angles[i] = beta
+
+        # Element Length
+        l = math.sqrt((yj - yi)**2 + (xj - xi)**2)  # Length [m]
+        # Rotation Matrix [Q]
+        c = math.cos(beta)
+        s = math.sin(beta)
+        Q = np.array([[c, s, 0, 0, 0 ,0],
+                    [-s, c, 0, 0, 0, 0],
+                    [0, 0, 1, 0, 0, 0],
+                    [0, 0, 0, c, s, 0],
+                    [0, 0, 0, -s, c, 0],
+                    [0, 0, 0, 0, 0, 1]])
+
+        # local Stiffness Matrix [k]
+        k = np.array([[E*A/l, 0, 0, -E*A/l, 0, 0],
+                    [0, 12*E*I/(l**3), 6*E*I/(l**2), 0, -12*E*I/(l**3), 6*E*I/(l**2)],
+                    [0, 6*E*I/(l**2), 4*E*I/l, 0, -6*E*I/(l**2), 2*E*I/l],
+                    [-E*A/l, 0, 0, E*A/l, 0, 0],
+                    [0, -12*E*I/(l**3), -6*E*I/(l**2), 0, 12*E*I/(l**3), -6*E*I/(l**2)],
+                    [0, 6*E*I/(l**2), 2*E*I/l, 0, -6*E*I/(l**2), 4*E*I/l]])
+        
+        # Get node global displacements
+        node_ini_disp = ENL[node_ini-1, int(2+3*DoP):int(2+4*DoP)]
+        node_end_disp = ENL[node_end-1, int(2+3*DoP):int(2+4*DoP)]
+
+        # Assembling element displacements
+        element_global_disp = np.zeros(2*DoP) # Pre-defining
+        element_global_disp[0:DoP] = node_ini_disp
+        element_global_disp[DoP:2*DoP] = node_end_disp
+
+        # Local Displacement
+        element_local_disp = Q@element_global_disp
+
+        # Internal Local Forces
+        element_internal_force = k@element_local_disp
+        print('The internal local Forces of the',i+1,'-th element are:')
+        print(element_internal_force)
+
+        # Storing the internal forces
+        element_internal_forces[i,:] = element_internal_force
+
+    print('-'*75)
+    return (element_internal_forces, element_angles)
