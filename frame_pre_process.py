@@ -128,7 +128,7 @@ def plot_frame_pre_process_v0(node_list, node_restraints, Fu, element_list):
     ax.set_ylabel('y [m]')
     plt.show()
 
-def plot_frame_pre_process_v1(node_list, node_restraints, Fu, element_list):
+def plot_frame_pre_process_v1(node_list, node_restraints, Fu, element_list, element_distributed_loads):
     # node_list: np array list of the nodes 
     # node_restraints: np array list of the node constraints [x,y,rz]
     # -1: Fixed
@@ -243,6 +243,7 @@ def plot_frame_pre_process_v1(node_list, node_restraints, Fu, element_list):
                     color='red',
                     bbox=dict(facecolor='white', edgecolor='red'))
     # PLOT ELEMENTS       
+    # Iterating over each element
     for i in range(number_elements):
         coord_ini = element_list[i,0]
         coord_end = element_list[i,1]
@@ -261,6 +262,42 @@ def plot_frame_pre_process_v1(node_list, node_restraints, Fu, element_list):
 
         ax.plot(x_element, y_element, lw=2, color = 'blue', zorder=0)
         ax.text(xg, yg, str(i+1), color='blue', bbox=dict(facecolor='white', edgecolor='blue'))
+
+        # PLOT ELEMENT DISTRIBUTED LOADS
+        if element_distributed_loads[i] != 0:
+            w = element_distributed_loads[i]
+            dx = xj - xi
+            dy = yj - yi
+            if dx==0:
+                if dy>0:
+                    beta = math.pi/2
+                else:
+                    beta = -math.pi/2
+            else:
+                beta = math.atan(dy/dx)
+
+            # Plotting Diagram
+            xwi = xi - w*math.sin(beta)
+            ywi = yi + w*math.cos(beta)
+
+            xwj = xj - w*math.sin(beta)
+            ywj = yj + w*math.cos(beta)
+
+            x_distributed_moment = np.array([xi, xj, xwj, xwi, xi])
+            y_distributed_moment = np.array([yi, yj, ywj, ywi, yi])
+
+            ax.plot(x_distributed_moment, y_distributed_moment, lw=2, color = 'green', zorder=1)
+
+            # Plotting Text
+            x_text = (xwi+xwj)/2
+            y_text = ywi
+            w_text = str(np.round(w, decimals = 2))
+
+            ax.annotate(w_text + 'N/m',
+                        xy=(x_text, y_text),
+                        xytext=(x_text, y_text), 
+                        color = 'green',
+                        zorder = 2)
 
     ax.set_xlabel('x [m]')
     ax.set_ylabel('y [m]')

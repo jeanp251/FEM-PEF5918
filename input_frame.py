@@ -3,144 +3,55 @@ import numpy as np
 # INPUT DATA
 # ----------------------------------------------------------------------------
 
-def get_frame_input_data():
-    '''
-    node_list = np.array([[0,0],
-                      [0,5],
-                      [5,5],
-                      [5,0]])
+def get_frame_input_data(problem):
+    # ----------------------------------------------------------------------------
+    # NODE LIST
+    # ----------------------------------------------------------------------------
+    # [x,y]
+    node_list_txt = './Problems/'+problem +'_node_list.txt'
+    node_list = np.loadtxt(node_list_txt, delimiter=',')
+
+    # ----------------------------------------------------------------------------
+    # NODE RESTRAINTS
+    # ----------------------------------------------------------------------------
     # -1: Fixed
     # +1: Free
     # [x,y,rz]
-    node_restraints = np.array([[-1, -1, -1],
-                                [1, 1, 1],
-                                [1, 1, 1],
-                                [-1, -1, -1]])
+    # ----------------------------------------------------------------------------
+    node_restraints_txt = './Problems/'+problem +'_node_restraints.txt'
+    node_restraints = np.loadtxt(node_restraints_txt, delimiter=',')
 
-    element_list = np.array([[1,2],
-                            [2,3],
-                            [3,4]])
+    # ----------------------------------------------------------------------------
+    # ELEMENT LIST
+    # ----------------------------------------------------------------------------
+    element_list_txt = './Problems/'+problem +'_element_list.txt'
+    element_list = np.loadtxt(element_list_txt, dtype=int, delimiter=',')
+
     # ----------------------------------------------------------------------------
     # CROSS-SECTION PROPERTIES
     # ----------------------------------------------------------------------------
-    # Element Proprerty [bi, hi, Ei]
-    element_properties = np.array([[0.25, 0.5, 1e6],
-                                [0.25, 0.5, 1e6],
-                                [0.25, 0.5, 1e6]])
+    # Element Proprerty [Ai, Ii, Ei]
+    element_properties_txt = './Problems/'+problem +'_section_properties.txt'
+    element_properties = np.loadtxt(element_properties_txt, delimiter=',')
+    
     # ----------------------------------------------------------------------------
-    # FORCES
+    # NODE FORCES Fu
     # ----------------------------------------------------------------------------
     # [Fx, Fy, Mz]
-    Fu = np.array([[0,0,0],
-                [1,0,0],
-                [0,0,0],
-                [0,0,0]])
-    # Displacement
+    node_forces_txt = './Problems/'+problem +'_node_forces.txt'
+    Fu = np.loadtxt(node_forces_txt, delimiter=',')
+
+    # ----------------------------------------------------------------------------
+    # ELEMENT DISTRIBUTED LOADS
+    # ----------------------------------------------------------------------------
+    element_distributed_loads_txt = './Problems/'+problem +'_element_distributed_loads.txt'
+    element_distributed_loads = np.loadtxt(element_distributed_loads_txt, delimiter=',')
+
+    # ----------------------------------------------------------------------------
+    # DISPLACEMENTS [U_u]
+    # ----------------------------------------------------------------------------
     # Initially zeros
-    U_u = np.array([[0,0,0],
-                    [0,0,0],
-                    [0,0,0],
-                    [0,0,0]])
-    '''
-    
-    node_list = np.array([[0,0],
-                          [0,1],
-                          [0,2],
-                          [0,3],
-                          [0,4],
-                          [0,5],
-                          [1,5],
-                          [2,5],
-                          [3,5],
-                          [4,5],
-                          [5,5],
-                          [5,4],
-                          [5,3],
-                          [5,2],
-                          [5,1],
-                          [5,0]])
+    node_displacements_txt = './Problems/'+problem +'_node_displacements.txt'
+    U_u = np.loadtxt(node_displacements_txt, delimiter=',')
 
-    node_restraints = np.array([[-1,-1,-1],
-                                [1,1,1],
-                                [1,1,1],
-                                [1,1,1],
-                                [1,1,1],
-                                [1,1,1],
-                                [1,1,1],
-                                [1,1,1],
-                                [1,1,1],
-                                [1,1,1],
-                                [1,1,1],
-                                [1,1,1],
-                                [1,1,1],
-                                [1,1,1],
-                                [1,1,1],
-                                [-1,-1,-1]])
-
-    element_list = np.array([[1,2],
-                             [2,3],
-                             [3,4],
-                             [4,5],
-                             [5,6],
-                             [6,7],
-                             [7,8],
-                             [8,9],
-                             [9,10],
-                             [10,11],
-                             [11,12],
-                             [12,13],
-                             [13,14],
-                             [14,15],
-                             [15,16]])
-
-    element_properties = np.array([[0.25, 0.5, 1e6],
-                                   [0.25, 0.5, 1e6],
-                                   [0.25, 0.5, 1e6],
-                                   [0.25, 0.5, 1e6],
-                                   [0.25, 0.5, 1e6],
-                                   [0.25, 0.5, 1e6],
-                                   [0.25, 0.5, 1e6],
-                                   [0.25, 0.5, 1e6],
-                                   [0.25, 0.5, 1e6],
-                                   [0.25, 0.5, 1e6],
-                                   [0.25, 0.5, 1e6],
-                                   [0.25, 0.5, 1e6],
-                                   [0.25, 0.5, 1e6],
-                                   [0.25, 0.5, 1e6],
-                                   [0.25, 0.5, 1e6]])
-
-    Fu = np.array([[0,0,0],
-                   [0,0,0],
-                   [0,0,0],
-                   [0,0,0],
-                   [0,0,0],
-                   [1,0,0],
-                   [0,0,0],
-                   [0,0,0],
-                   [0,0,0],
-                   [0,0,0],
-                   [0,0,0],
-                   [0,0,0],
-                   [0,0,0],
-                   [0,0,0],
-                   [0,0,0],
-                   [0,0,0]])
-
-    U_u = np.array([[0,0,0],
-                    [0,0,0],
-                    [0,0,0],
-                    [0,0,0],
-                    [0,0,0],
-                    [0,0,0],
-                    [0,0,0],
-                    [0,0,0],
-                    [0,0,0],
-                    [0,0,0],
-                    [0,0,0],
-                    [0,0,0],
-                    [0,0,0],
-                    [0,0,0],
-                    [0,0,0],
-                    [0,0,0]])
-    
-    return (node_list, node_restraints, element_list, element_properties, Fu, U_u)
+    return (node_list, node_restraints, element_list, element_properties, Fu, element_distributed_loads, U_u)
